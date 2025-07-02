@@ -86,8 +86,6 @@ char* readFromFile(char* filePath, int readOption, long *size){
 	fread(fcontent, 1, *size,  fp);
 	printf("fread ended!\n");
 	//printf("fcontent: %s\n",fcontent);
-	strcat(fcontent, "\01"); // adding \1 to indicate end of file/string when decoding
-	*size++; // Adding 1 to strLen as the Last \0 won't be counted by strlen later
 	fclose(fp);
 	return fcontent;
 }
@@ -159,7 +157,7 @@ int main(int argc, char* argv[])
     userInputArr = malloc(maxLineLen);
 
     memset(userInputArr, 0, maxLineLen);
-    userInputArr[0] = "_";
+    userInputArr[0] = '_';
     colorArr = malloc(sizeof(int)*maxLineLen);
     for(int i=0;i<maxLineLen;i++){
 	    colorArr[i] = 0;
@@ -193,18 +191,12 @@ int main(int argc, char* argv[])
 	    clearScreen();
 	    printf("entered char:%d  %c   correctInput:%d %c\n", charInput, charInput, splitText[lineI][cursorI], splitText[lineI][cursorI]);
 
-	    if(charInput!=8){
-		    if(charInput==splitText[lineI][cursorI]){
-			    colorArr[cursorI] = 1;
-			    correctN++;
-		    }
-		    else{
-			    colorArr[cursorI] = 2;
-		    }
-	    }
 	    if(charInput==127){ //backspace key
 		    if(cursorI>0){
-			    cursorI-=2;
+			    if(userInputArr[cursorI-1] == splitText[lineI][cursorI-1]){
+				    correctN--;
+			    }
+			    cursorI-=1;
 		    }
 	    }
 	    if(charInput == '\n'){
@@ -221,12 +213,30 @@ int main(int argc, char* argv[])
 		    break;
 	    }
 
-	    userInputArr[cursorI] = charInput;
-	    userInputArr[cursorI+1] = '_';
+
+	    if(charInput!=8){
+		    if(charInput==splitText[lineI][cursorI]){
+			    colorArr[cursorI] = 1;
+			    correctN++;
+			    printf("correct!");
+		    }
+		    else{
+			    colorArr[cursorI] = 2;
+		    }
+	    }
+	    printf("correctN: %d\n",correctN);
+
+	    if(charInput == 127){//backspace key
+		    userInputArr[cursorI] = '_';
+	    }
+	    else{
+		    userInputArr[cursorI+1] = '_';
+		    userInputArr[cursorI] = charInput;
+		    cursorI++;
+	    }
 
 	    printf("starting printChar\n");
-	    printChar(splitText, lineN, lineLen, userInputArr, colorArr, lineI, cursorI+1);
-	    cursorI++;
+	    printChar(splitText, lineN, lineLen, userInputArr, colorArr, lineI, cursorI);
 
 	    if(cursorI >= lineLen[lineI]){
 		    memset(userInputArr, 0, maxLineLen);
